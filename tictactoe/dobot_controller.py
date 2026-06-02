@@ -4,9 +4,19 @@ import DobotDllType as dType
 import config
 
 
+_SDK_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'demo-magician-python-64-master'))
+
+
 class DobotController:
     def __init__(self):
-        self.api = dType.load()
+        # DobotDllType.load() 使用相对路径 "./DobotDll.dll"，
+        # 必须切换到 SDK 目录才能找到 DLL 文件
+        _orig = os.getcwd()
+        os.chdir(_SDK_DIR)
+        try:
+            self.api = dType.load()
+        finally:
+            os.chdir(_orig)
 
     def connect(self):
         state = dType.ConnectDobot(self.api, config.DOBOT_PORT, 115200)[0]

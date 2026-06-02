@@ -11,14 +11,14 @@ def main():
     logic = GameLogic()
     display = CameraDisplay()
 
-    print("连接 Dobot 机械臂...")
+    print("Connecting to Dobot...")
     try:
         dobot.connect()
     except ConnectionError as e:
-        print(f"错误: {e}")
+        print(f"Error: {e}")
         display.release()
         sys.exit(1)
-    print("连接成功！")
+    print("Connected!")
 
     try:
         while _run_game(dobot, logic, display):
@@ -33,12 +33,20 @@ def _run_game(dobot: DobotController, logic: GameLogic, display: CameraDisplay) 
     logic.reset()
     display.set_board(logic.board)
     display.clear_result()
-    display.set_status("正在画棋盘，请稍候...")
+    # 等待用户确认后再开始画棋盘
+    display.set_status("Ready! Press ENTER to draw board  |  Q: quit")
+    while True:
+        key = display.update()
+        if key == 13:    # Enter
+            break
+        if key == ord('q'):
+            return False
 
+    display.set_status("Drawing board, please wait...")
     dobot.draw_grid(update_cb=display.update)
 
     while True:
-        display.set_status("轮到你! 按 1-9 落子  |  R 重开  |  Q 退出")
+        display.set_status("Your turn! Press 1-9  |  R: restart  |  Q: quit")
         key = display.update()
 
         if key == ord('q'):
@@ -50,7 +58,7 @@ def _run_game(dobot: DobotController, logic: GameLogic, display: CameraDisplay) 
         if ord('1') <= key <= ord('9'):
             cell = key - ord('0')
             if not logic.place_move(cell, GameLogic.HUMAN):
-                display.set_status("该格已占用，请重选！")
+                display.set_status("Cell occupied! Choose again.")
                 continue
 
             if _check_and_handle_end(logic, display):
@@ -58,7 +66,7 @@ def _run_game(dobot: DobotController, logic: GameLogic, display: CameraDisplay) 
 
             ai_cell = logic.ai_move()
             logic.place_move(ai_cell, GameLogic.ROBOT)
-            display.set_status(f"机器人选格 {ai_cell}，正在画X...")
+            display.set_status(f"Robot chose {ai_cell}, drawing X...")
             dobot.draw_cross(ai_cell, update_cb=display.update)
 
             if _check_and_handle_end(logic, display):
@@ -78,7 +86,7 @@ def _check_and_handle_end(logic: GameLogic, display: CameraDisplay) -> bool:
 
 def _confirm_restart(display: CameraDisplay) -> bool:
     """提示换纸，等待 Enter 确认或 Q 退出。"""
-    display.set_status("请换纸，换好后按 ENTER 继续 | Q 退出")
+    display.set_status("Change paper, then press ENTER | Q: quit")
     while True:
         key = display.update()
         if key == 13:    # Enter

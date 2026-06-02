@@ -6,7 +6,10 @@ from game_logic import GameLogic
 
 class CameraDisplay:
     def __init__(self):
-        self.cap = cv2.VideoCapture(config.CAMERA_INDEX)
+        # 优先用 DirectShow（Windows USB摄像头更稳定），失败则用默认后端
+        self.cap = cv2.VideoCapture(config.CAMERA_INDEX, cv2.CAP_DSHOW)
+        if not self.cap.isOpened():
+            self.cap = cv2.VideoCapture(config.CAMERA_INDEX)
         self._board = None
         self._status = ""
         self._result = None   # GameLogic.HUMAN / GameLogic.ROBOT / 'draw' / None
