@@ -154,6 +154,7 @@ def _wait_restart(display: CameraDisplay) -> bool:
     while True:
         key = display.update()
         if key == ord('r'):
+            display.clear_result()   # 清掉 "You Win!" 覆盖层，让 _confirm_restart 提示可见
             return _confirm_restart(display)
         if key == ord('q'):
             return False
