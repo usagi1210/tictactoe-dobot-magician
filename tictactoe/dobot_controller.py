@@ -63,22 +63,28 @@ class DobotController:
             dType.dSleep(100)
         dType.SetQueuedCmdStopExec(self.api)
 
+    def _queue_park(self) -> int:
+        """队列添加归位动作：抬臂到安全高度并缩回，避免遮挡摄像头。"""
+        return self._queue_move(config.ARM_PARK_X, config.ARM_PARK_Y, config.ARM_PARK_Z)
+
     def draw_grid(self, update_cb=None):
-        """机械臂画 3×3 井字格（4 条线）。"""
+        """机械臂画 3×3 井字格（4 条线），画完后归位。"""
         cx, cy = config.BOARD_CENTER_X, config.BOARD_CENTER_Y
         s = config.CELL_SIZE
         dType.SetQueuedCmdClear(self.api)
         self._queue_line(cx - s/2, cy + 1.5*s, cx - s/2, cy - 1.5*s)   # 竖线1
         self._queue_line(cx + s/2, cy + 1.5*s, cx + s/2, cy - 1.5*s)   # 竖线2
         self._queue_line(cx - 1.5*s, cy + s/2, cx + 1.5*s, cy + s/2)   # 横线1
-        last = self._queue_line(cx - 1.5*s, cy - s/2, cx + 1.5*s, cy - s/2)  # 横线2
+        self._queue_line(cx - 1.5*s, cy - s/2, cx + 1.5*s, cy - s/2)   # 横线2
+        last = self._queue_park()
         self._run_queue(last, update_cb)
 
     def draw_cross(self, cell: int, update_cb=None):
-        """机械臂在指定格子（1-9）画 X。"""
+        """机械臂在指定格子（1-9）画 X，画完后归位。"""
         cx, cy = self._cell_center(cell)
         r = config.CROSS_SIZE
         dType.SetQueuedCmdClear(self.api)
         self._queue_line(cx - r, cy + r, cx + r, cy - r)          # 斜线1
-        last = self._queue_line(cx + r, cy + r, cx - r, cy - r)   # 斜线2
+        self._queue_line(cx + r, cy + r, cx - r, cy - r)          # 斜线2
+        last = self._queue_park()
         self._run_queue(last, update_cb)
